@@ -28,10 +28,19 @@ confirm() {
 install_dependencies() {
     if confirm "Установить необходимые пакеты и зависимости?"; then
         echo "Обновление пакетов и установка зависимостей..."
-        sudo apt-get update -y && sudo apt upgrade -y
+        sudo apt-get update -y && sudo apt-get upgrade -y
+        if [ $? -ne 0 ]; then
+            echo "Ошибка при обновлении пакетов."
+            exit 1
+        fi
+
         sudo apt-get install -y make build-essential unzip lz4 gcc git jq ncdu tmux \
         cmake clang pkg-config libssl-dev python3-pip protobuf-compiler bc curl
-        
+        if [ $? -ne 0 ]; then
+            echo "Ошибка при установке зависимостей."
+            exit 1
+        fi
+
         echo "Установка Docker и Docker Compose..."
         # Установка Docker с дополнительной проверкой
         sudo apt update && sudo apt install -y \
@@ -39,12 +48,24 @@ install_dependencies() {
           curl \
           gnupg \
           lsb-release
+        if [ $? -ne 0 ]; then
+            echo "Ошибка при установке базовых пакетов Docker."
+            exit 1
+        fi
 
         # Добавление GPG-ключа для Docker
         curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+        if [ $? -ne 0 ]; then
+            echo "Ошибка при добавлении GPG-ключа."
+            exit 1
+        fi
 
         # Добавление Docker репозитория
         echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+        if [ $? -ne 0 ]; then
+            echo "Ошибка при добавлении Docker репозитория."
+            exit 1
+        fi
 
         # Обновление информации о пакетах и установка Docker
         sudo apt update && sudo apt install -y \
@@ -52,21 +73,45 @@ install_dependencies() {
           docker-ce-cli \
           containerd.io \
           docker-compose-plugin
+        if [ $? -ne 0 ]; then
+            echo "Ошибка при установке Docker."
+            exit 1
+        fi
 
         # Добавляем пользователя в группу docker для работы без sudo
         sudo usermod -aG docker $USER
+        if [ $? -ne 0 ]; then
+            echo "Ошибка при добавлении пользователя в группу docker."
+            exit 1
+        fi
+
         newgrp docker
+        if [ $? -ne 0 ]; then
+            echo "Ошибка при применении группы docker."
+            exit 1
+        fi
 
         # Проверка установки Docker и Docker Compose
         docker --version
+        if [ $? -ne 0 ]; then
+            echo "Ошибка при проверке версии Docker."
+            exit 1
+        fi
+
         docker compose version
+        if [ $? -ne 0 ]; then
+            echo "Ошибка при проверке версии Docker Compose."
+            exit 1
+        fi
 
         # Скачивание необходимого образа Docker
         echo "Скачивание необходимого образа..."
-        docker pull ritualnetwork/hello-world-infernet:latest && \
-        echo "Образ скачан успешно!" || \
-        { echo "Ошибка при скачивании образа."; return 1; }
-
+        docker pull ritualnetwork/hello-world-infernet:latest
+        if [ $? -ne 0 ]; then
+            echo "Ошибка при скачивании образа."
+            exit 1
+        fi
+        echo "Образ скачан успешно!"
     else
         echo "Пропущена установка зависимостей."
     fi
