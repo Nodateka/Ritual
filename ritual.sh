@@ -36,10 +36,17 @@ install_dependencies() {
         
         echo "Установка Docker и Docker Compose..."
         # Установка Docker с дополнительной проверкой
-        bash <(curl -s https://raw.githubusercontent.com/Nodateka/Docker/refs/heads/main/docker.sh) && \
-        echo "Docker установлен успешно!" || \
-        { echo "Ошибка установки Docker."; return 1; }
+        bash <(curl -s https://raw.githubusercontent.com/Nodateka/Docker/refs/heads/main/docker.sh)
+        
+        # Проверка успешной установки Docker
+        if ! command -v docker &>/dev/null; then
+            echo "Ошибка: Docker не установлен!"
+            return 1
+        else
+            echo "Docker установлен успешно!"
+        fi
 
+        # Скачивание необходимого образа Docker
         echo "Скачивание необходимого образа..."
         docker pull ritualnetwork/hello-world-infernet:latest && \
         echo "Образ скачан успешно!" || \
