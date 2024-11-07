@@ -11,8 +11,6 @@ HELLO_CONFIG_PATH="/root/infernet-container-starter/projects/hello-world/contain
 DEPLOY_SCRIPT_PATH="/root/infernet-container-starter/projects/hello-world/contracts/script/Deploy.s.sol"
 MAKEFILE_PATH="/root/infernet-container-starter/projects/hello-world/contracts/Makefile"
 DOCKER_COMPOSE_PATH="/root/infernet-container-starter/deploy/docker-compose.yaml"
-#foundryup="/root/.foundry/bin/foundryup"
-#FORGE_PATH="/root/.foundry/bin/forge"
 export PATH=$PATH:/root/.foundry/bin
 
 # Функция для запроса подтверждения
@@ -36,15 +34,32 @@ install_dependencies() {
         
         echo "Установка Docker и Docker Compose..."
         # Установка Docker с дополнительной проверкой
-        bash <(curl -s https://raw.githubusercontent.com/Nodateka/Docker/refs/heads/main/docker.sh)
-        
-        # Проверка успешной установки Docker
-        if ! command -v docker &>/dev/null; then
-            echo "Ошибка: Docker не установлен!"
-            return 1
-        else
-            echo "Docker установлен успешно!"
-        fi
+        sudo apt update && sudo apt install -y \
+          ca-certificates \
+          curl \
+          gnupg \
+          lsb-release
+
+        # Добавление GPG-ключа для Docker
+        curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+
+        # Добавление Docker репозитория
+        echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+        # Обновление информации о пакетах и установка Docker
+        sudo apt update && sudo apt install -y \
+          docker-ce \
+          docker-ce-cli \
+          containerd.io \
+          docker-compose-plugin
+
+        # Добавляем пользователя в группу docker для работы без sudo
+        sudo usermod -aG docker $USER
+        newgrp docker
+
+        # Проверка установки Docker и Docker Compose
+        docker --version
+        docker compose version
 
         # Скачивание необходимого образа Docker
         echo "Скачивание необходимого образа..."
