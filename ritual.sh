@@ -33,10 +33,18 @@ install_dependencies() {
         sudo apt-get update -y && sudo apt upgrade -y
         sudo apt-get install -y make build-essential unzip lz4 gcc git jq ncdu tmux \
         cmake clang pkg-config libssl-dev python3-pip protobuf-compiler bc curl
+        
         echo "Установка Docker и Docker Compose..."
-        bash <(curl -s https://raw.githubusercontent.com/Nodateka/Docker/refs/heads/main/docker.sh)
-        echo "Скачивание необходимого образа"
-        docker pull ritualnetwork/hello-world-infernet:latest
+        # Установка Docker с дополнительной проверкой
+        bash <(curl -s https://raw.githubusercontent.com/Nodateka/Docker/refs/heads/main/docker.sh) && \
+        echo "Docker установлен успешно!" || \
+        { echo "Ошибка установки Docker."; return 1; }
+
+        echo "Скачивание необходимого образа..."
+        docker pull ritualnetwork/hello-world-infernet:latest && \
+        echo "Образ скачан успешно!" || \
+        { echo "Ошибка при скачивании образа."; return 1; }
+
     else
         echo "Пропущена установка зависимостей."
     fi
